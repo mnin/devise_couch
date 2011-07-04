@@ -3,6 +3,8 @@ module Devise
     module CouchrestModel
       module Schema
         include Devise::Schema
+        Devise::Models.config(self, :authentication_keys, :request_keys, :strip_whitespace_keys, :case_insensitive_keys, :http_authenticatable, :params_authenticatable)
+
         # Tell how to apply schema methods.
         def apply_devise_schema(name, type, options={})
           return unless Devise.apply_schema
@@ -10,6 +12,9 @@ module Devise
         end
 
         def find_for_authentication(conditions)
+          conditions = filter_auth_params(conditions.dup)
+          (case_insensitive_keys || []).each { |k| conditions[k].try(:downcase!) }
+          (strip_whitespace_keys || []).each { |k| conditions[k].try(:strip!) }
           find(:conditions => conditions)
         end
 
